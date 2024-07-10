@@ -1,1 +1,68 @@
 
+#include <WiFi.h>
+#include <FirebaseESP32.h>
+
+// Replace with your Firebase project URL and API key
+#define FIREBASE_HOST "https://your-project-id.firebaseio.com/"
+#define FIREBASE_AUTH "your-api-key"
+
+// Replace with your Wi-Fi SSID and password
+#define WIFI_SSID "your-SSID"
+#define WIFI_PASSWORD "your-PASSWORD"
+
+// Define FirebaseESP32 data object
+FirebaseData firebaseData;
+FirebaseJson json;
+int Vresistor = A0; 
+int Vrdata = 0; 
+
+void setup()
+{
+    Serial.begin(115200);
+    pinMode(Vresistor, INPUT);
+
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    Serial.print("Connecting to Wi-Fi");
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        Serial.print(".");
+        delay(300);
+    }
+    Serial.println();
+    Serial.print("Connected with IP: ");
+    Serial.println(WiFi.localIP());
+    Serial.println();
+
+    Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+    Firebase.reconnectWiFi(true);
+
+    // Set database read timeout to 1 minute (max 15 minutes)
+    Firebase.setReadTimeout(firebaseData, 1000 * 60);
+    // tiny, small, medium, large and unlimited.
+    // Size and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
+    Firebase.setwriteSizeLimit(firebaseData, "tiny");
+
+    /*
+    This option allows get and delete functions (PUT and DELETE HTTP requests) works for device connected behind the
+    Firewall that allows only GET and POST requests.
+    
+    Firebase.enableClassicRequest(firebaseData, true);
+    */
+
+    Serial.println("------------------------------------");
+    Serial.println("Connected...");
+}
+
+void loop()
+{
+    // Vrdata = analogRead(Vresistor);
+    int Sdata = random(0, 1023);
+    Serial.println(Sdata);
+    delay(100);
+    json.set("/one", Sdata);
+    json.set("/two", Sdata);
+    json.set("/three", Sdata);
+    delay(1000);
+
+    Firebase.updateNode(firebaseData, "/Weight", json);
+}
